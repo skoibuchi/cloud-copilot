@@ -1,5 +1,5 @@
-
 from utils.embedding import supported_vectorstore_class
+from tools.memory_tools import get_memory_tools
 from tools.multi_cloud_tools import list_all_cloud_resources
 from tools.utils import get_cloud_tools
 
@@ -7,6 +7,9 @@ from tools.utils import get_cloud_tools
 def get_tools(providers: str, vectorstore_class: str = "chroma"):
     _providers = [provider.lower() for provider in providers.split(',')]
     tools = []
+
+    # memory
+    tools.extend(get_memory_tools())
 
     # cloud
     tools.extend(get_cloud_tools(providers=_providers))

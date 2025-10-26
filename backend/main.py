@@ -6,6 +6,7 @@ from langchain.agents import create_agent
 from llm import get_llm
 from tools import get_tools
 from tools.multi_cloud_tools import list_all_cloud_resources
+from tools.memory_tools import Context
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -27,6 +28,7 @@ agent = create_agent(tools=tools, llm=llm)
 
 @app.post("/chat")
 async def chat(
+    user_id: str = Form(..., description="User ID"),
     query: Optional[str] = Form(None),
     files: Optional[List[UploadFile]] = File(None)
 ):
@@ -52,7 +54,15 @@ async def chat(
         reply += rag_tool_instance.add_document(file_paths=file_paths)
 
     if query:
-        response = await agent.ainvoke({"input": query})
+        response = await agent.ainvoke(
+            {
+                "messages": [{
+                    "role": "user",
+                    "content": query
+                }]
+            },
+            context=Context(user_id=user_id)
+        )
         reply = response.get("output", str(response)) if isinstance(response, dict) else str(response)
 
     return JSONResponse({
