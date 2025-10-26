@@ -3,6 +3,7 @@ from fastapi import FastAPI, UploadFile, Form, File, Query
 from typing import List, Optional
 from fastapi.responses import JSONResponse
 from langchain.agents import create_agent
+from langgraph.store.memory import InMemoryStore
 from llm import get_llm
 from tools import get_tools
 from tools.multi_cloud_tools import list_all_cloud_resources
@@ -22,8 +23,10 @@ app = FastAPI()
 llm = get_llm(LLM_PROVIDER)
 # Tool
 tools, rag_tool_instance = get_tools(CLOUD_PROVIDERS, VECTORSTORE)
+# store
+store = InMemoryStore()
 # Agent
-agent = create_agent(tools=tools, llm=llm)
+agent = create_agent(tools=tools, llm=llm, store=store)
 
 
 @app.post("/chat")
