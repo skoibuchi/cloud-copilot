@@ -80,11 +80,10 @@ e.g.,
 
 
 ## Rest API
-Send a POST request to the backend API /chat with JSON payload:
-```json
-{
-  "message": "List all VM instances"
-}
+```sh
+curl -X POST "http://localhost:8000/chat" \
+  -F "user_id=dummy" \
+  -F "query=List all VM instances"
 ```
 
 The agent will reply with results from LLM and/or tools.
