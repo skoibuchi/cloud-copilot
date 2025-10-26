@@ -12,6 +12,7 @@ type CloudResource = {
 };
 
 export default function Home() {
+  const [userId, setUserId] = useState("default_user");  // set default userId for dev
   const [input, setInput] = useState("");
   const [chatLog, setChatLog] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
@@ -39,6 +40,7 @@ export default function Home() {
 
     try {
       const formData = new FormData();
+      formData.append("user_id", userId);
       formData.append("query", input);
       if (files) Array.from(files).forEach((file) => formData.append("files", file));
 
