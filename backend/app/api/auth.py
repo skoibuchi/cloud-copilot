@@ -5,6 +5,7 @@ from app.schemas.user import UserCreate, UserResponse
 from app.database.database import get_db
 from app.models.user import User
 from app.core.security import hash_password, verify_password, create_access_token
+from app.core.config import settings
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -33,12 +34,18 @@ def login(form_data: UserCreate, db: Session = Depends(get_db)):
 
     token = create_access_token({"sub": user.username})
 
-    response = JSONResponse({"message": "Logged in"})
+    response = JSONResponse(
+        content={
+            "message": "Logged in",
+            "access_token": token,
+            "token_type": "bearer"
+        }
+    )
     response.set_cookie(
         key="token",
         value=token,
         httponly=True,
-        secure=False,
+        secure=settings.SECURE_CONNECTION,
         samesite="lax",
         max_age=(60 * 60 * 24)
     )
