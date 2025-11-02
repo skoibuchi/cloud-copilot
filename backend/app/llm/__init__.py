@@ -12,16 +12,16 @@ def get_llm(provider: str):
     if provider == "gemini":
         api_key = settings.GEMINI_API_KEY
         model = settings.GEMINI_MODEL
-        return GeminiLLM(api_key=api_key, model=model)
+        return GeminiLLM(api_key=api_key, model=model).llm
     elif provider == "openai":
         api_key = settings.OPENAI_API_KEY
         model = settings.OPENAI_MODEL
-        return OpenAILLM(api_key=api_key, model=model)
+        return OpenAILLM(api_key=api_key, model=model).llm
     elif provider == "watsonx":
         api_key = settings.WATSONX_API_KEY
         project_id = settings.WATSONX_PROJECT_ID
         url = settings.WATSONX_URL
         model = settings.WATSONX_MODEL
-        return WatsonxLLM(api_key=api_key, project_id=project_id, url=url, model_id=model)
+        return WatsonxLLM(api_key=api_key, project_id=project_id, url=url, model_id=model).llm
     else:
         raise ValueError(f"Unsupported LLM provider: {provider}")
