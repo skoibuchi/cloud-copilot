@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CloudResource } from "@/types";
+import { getToken } from "@/lib/auth";
 
 interface Props {
   cloudResources: CloudResource[];
@@ -56,7 +57,10 @@ export default function CloudResources({ cloudResources, setCloudResources }: Pr
   const fetchCloudResources = async () => {
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL;
-      const res = await fetch(`${API_URL}/cloud-resources`);
+      const token = await getToken()
+      const res = await fetch(`${API_URL}/resources`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const data = await res.json();
       const resourcesArray: CloudResource[] = Object.entries(data).map(
         ([provider, info]) => ({

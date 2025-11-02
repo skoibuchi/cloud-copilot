@@ -22,3 +22,4 @@ uvicorn main:app --reload --port 8000
 ## Memo
 ### Development Log
 - (2025/10/24)Implemented and tested only for Google Cloud. Because safely try out with free plan...
+- (2025/10/24)Implemented user login feature and cloud settings save feature.

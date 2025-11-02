@@ -30,3 +30,4 @@ npm run start
 ## Memo
 ### Development Log
 - (2025/10/24)Implemented only simple chat interface.
+- (2025/11/03)Implemented user login and cloud setting interface
