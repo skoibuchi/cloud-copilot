@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Message, CloudResource } from "@/types";
+import { getToken } from "@/lib/auth";
 
 interface Props {
   userId: string;
@@ -40,7 +41,14 @@ export default function ChatBox({ userId, chatLog, setChatLog, setCloudResources
       if (files) Array.from(files).forEach((file) => formData.append("files", file));
 
       const API_URL = process.env.NEXT_PUBLIC_API_URL;
-      const res = await fetch(`${API_URL}/chat`, { method: "POST", body: formData });
+      const token = await getToken()
+      const res = await fetch(`${API_URL}/chat`, { 
+        method: "POST", 
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+        body: formData 
+      });
       const data = await res.json();
 
       setChatLog((prev) => [...prev, { role: "ai", content: data.reply }]);

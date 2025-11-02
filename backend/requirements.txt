@@ -1,11 +1,16 @@
-fastapi==0.120.0
+fastapi==0.120.4
 uvicorn[standard]==0.38.0
 langchain==1.0.2
 langchain-community==0.4
 langchain-huggingface==1.0.0
 sentence-transformers==5.1.2
 pydantic==2.12.3
+pydantic[email]==2.12.3
 python-dotenv==1.1.1
+passlib==1.7.4
+bcrypt==4.0.1
+python-jose==3.5.0
+python-multipart==0.0.20
 
 # cloud
 google-cloud-compute==1.40.0
@@ -23,5 +28,5 @@ ibm-cos-sdk==2.14.3
 # llm
 langchain-google-genai==3.0.0
 langchain-openai==1.0.1
-# ibm-watsonx-ai==1.4.2
-# langchain-ibm==0.3.19
+ibm-watsonx-ai==1.4.4
+langchain-ibm==1.0.0
