@@ -80,12 +80,14 @@ e.g.,
 
 
 ## Rest API
+### Authentication
 ```sh
 curl -X POST http://localhost:8000/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username":"your username","password":"your passwored"}'
 ```
 
+### Request to AI
 ```sh
 curl -X POST http://localhost:8000/chat/ \
   -H "Authorization: Bearer <your token>" \
