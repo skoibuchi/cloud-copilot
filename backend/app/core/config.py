@@ -40,5 +40,8 @@ class Settings(BaseSettings):
     ADMIN_EMAIL: ClassVar[str] = os.getenv("ADMIN_EMAIL", "admin@example.com")
     ADMIN_PASSWORD: ClassVar[str] = os.getenv("ADMIN_PASSWORD", "adminpassword")
 
+    # Log directory
+    LOG_DIR: ClassVar[str] = os.getenv("LOG_DIR", "logs")
+
 
 settings = Settings()
