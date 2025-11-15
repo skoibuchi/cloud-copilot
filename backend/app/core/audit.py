@@ -22,7 +22,7 @@ class AuditService:
                                    max_bytes=max_bytes, backup_count=backup_count)
         self.logger = self.logger_class.logger
 
-    def record_to_db(
+    def _record_to_db(
         self,
         user_id: Optional[str],
         action: str,
@@ -62,7 +62,7 @@ class AuditService:
             self.db.rollback()
             raise Exception(f"[AuditService] DB write failed for {action}: {e}. Fallback log only.")
 
-    def record_to_file(
+    def _record_to_file(
         self,
         user_id: Optional[str],
         action: str,
@@ -70,7 +70,7 @@ class AuditService:
         details: Optional[Dict[str, Any]] = None,
         success: bool = True,
         error_message: Optional[str] = None,
-        log_level=logging.INFO
+        log_level: Optional[int] = logging.INFO
     ):
         """
         Record an audit event in the logging file.
@@ -101,12 +101,21 @@ class AuditService:
             self.logger.warning(message)
         elif log_level == logging.ERROR:
             self.logger.error(message)
-        elif log_level == logging.FATAL:
-            self.logger.fatal(message)
+        elif log_level == logging.CRITICAL:
+            self.logger.critical(message)
         else:
             self.logger.info(message)
 
-    def close(self):
+    def _connect(self, db: Optional[Session] = None):
+        """
+        Connect to the database session (for manual instantiation)
+        """
+        try:
+            self.db = db or SessionLocal()
+        except Exception:
+            pass
+
+    def _close(self):
         """
         Close the database session (for manual instantiation)
         """
@@ -115,7 +124,35 @@ class AuditService:
         except Exception:
             pass
 
-    def record_action(
+    def _get_log_level(self, log_level: Optional[int] | Optional[str]) -> int:
+        """
+        Convert log level string to log level of logging module, and undefined log level numbers.
+        Args:
+            log_level: log level string or integer
+        Returns:
+            int: log level
+        """
+        if isinstance(log_level, str):
+            log_level_upper = log_level.upper()
+            if log_level_upper == "CRITICAL":
+                return logging.CRITICAL
+            elif log_level_upper == "ERROR":
+                return logging.ERROR
+            elif log_level_upper == "WARNING":
+                return logging.WARNING
+            elif log_level_upper == "INFO":
+                return logging.INFO
+            elif log_level_upper == "DEBUG":
+                return logging.DEBUG
+            else:
+                return logging.DEBUG
+        elif isinstance(log_level, int):
+            if log_level not in (logging.CRITICAL, logging.ERROR, logging.WARNING, logging.INFO, logging.DEBUG):
+                return logging.DEBUG
+        else:
+            return logging.DEBUG
+
+    def log(
         self,
         user_id: Optional[str],
         action: str,
@@ -123,8 +160,10 @@ class AuditService:
         details: Optional[Dict[str, Any]] = None,
         success: bool = True,
         error_message: Optional[str] = None,
+        log_level: Optional[int] | Optional[str] = None,
+        db: Optional[Session] = None,
         output_db: bool = True,
-        output_file: bool = True
+        output_file: bool = True,
     ):
         """
         Record an audit event in the logging file.
@@ -139,17 +178,20 @@ class AuditService:
             output_db: output to db or not
             output_file: output to file or not
         """
-        if not self.db:
-            self.db = SessionLocal()
         if output_db:
+            if not self.db:
+                self._connect(db=db)
             try:
-                self.record_to_db(user_id=user_id, action=action, resource=resource,
-                                  details=details, success=success, error_message=error_message)
+                self._record_to_db(user_id=user_id, action=action, resource=resource,
+                                   details=details, success=success, error_message=error_message)
             except Exception as e:
                 if output_file:
-                    self.logger.warning(str(e))
-            self.close()
+                    self._record_to_file(user_id=user_id, action="AuditService.log", resource=resource,
+                                         details=e, success=False, error_message="record to db error",
+                                         log_level=logging.ERROR)
+            self._close()
 
         if output_file:
-            self.record_to_file(user_id=user_id, action=action, resource=resource,
-                                details=details, success=success, error_message=error_message)
+            self._record_to_file(user_id=user_id, action=action, resource=resource,
+                                 details=details, success=success, error_message=error_message,
+                                 log_level=self._get_log_level(log_level))
