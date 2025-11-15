@@ -11,18 +11,25 @@ from app.services.cloud_config_service import get_configs_dict
 # ----------------------------
 # Input Schemas for Tools
 # ----------------------------
-class UploadFileInput(BaseModel):
-    user_id: int = Field(..., description="ユーザーID")
-    file_path: str = Field(..., description="Local path to file / ローカルのファイルパス")
-    bucket_name: str = Field(..., description="Target S3 bucket / 送信先S3バケット")
-    object_name: Optional[str] = Field(None, description="S3 object name, defaults to file name / オブジェクト名（省略時はファイル名）")
-    account_name: str = Field(..., description="AWS account name")
+class FileOperationInput(BaseModel):
+    user_id: int = Field(..., description="User ID")
+    bucket_name: str = Field(..., description="Target S3 bucket")
+    account_name: Optional[str] = Field(..., description="AWS account name")
+
+
+class UploadFileInput(FileOperationInput):
+    file_path: str = Field(..., description="Local path to file")
+    object_name: Optional[str] = Field(None, description="S3 object name, defaults to file name")
+
+
+class DeleteFileInput(FileOperationInput):
+    object_name: str = Field(..., description="S3 object name")
 
 
 class VMUsageInput(BaseModel):
-    user_id: int = Field(..., description="ユーザーID")
-    instance_id: str = Field(..., description="EC2 instance ID / EC2インスタンスID")
-    n: int = Field(..., description="Past minutes to calculate average / 過去n分のCPU使用率平均を計算")
+    user_id: int = Field(..., description="User ID")
+    instance_id: str = Field(..., description="EC2 instance ID")
+    n: int = Field(..., description="Past minutes to calculate average")
     account_name: str = Field(..., description="AWS account name")
 
 
@@ -133,6 +140,27 @@ async def _upload_file_to_bucket(user_id: int, file_path: str, bucket_name: str,
     return f"File '{object_name}' uploaded to bucket '{bucket_name}'."
 
 
+async def _list_files(user_id: int, bucket_name: str, account_name: Optional[str] = None) -> list[str]:
+    """
+    List all objects in the specified S3 bucket.
+    指定したS3バケット内のオブジェクト一覧を返す
+    """
+    client = get_client("s3", user_id, account_name)
+    response = client.list_objects_v2(Bucket=bucket_name)
+    contents = response.get("Contents", [])
+    return [obj["Key"] for obj in contents] if contents else []
+
+
+async def _delete_file(user_id: int, bucket_name: str, object_name: str, account_name: Optional[str] = None) -> str:
+    """
+    Delete an object from the specified S3 bucket.
+    指定したS3バケットからオブジェクトを削除する
+    """
+    client = get_client("s3", user_id, account_name)
+    client.delete_object(Bucket=bucket_name, Key=object_name)
+    return f"File '{object_name}' deleted from bucket '{bucket_name}'."
+
+
 # ----------------------------
 # CloudWatch Monitoring / CloudWatch監視
 # ----------------------------
@@ -171,6 +199,8 @@ stop_vm = tool(_stop_vm)
 create_bucket = tool(_create_bucket)
 list_buckets = tool(_list_buckets)
 upload_file_to_bucket = tool(_upload_file_to_bucket, args_schema=UploadFileInput)
+list_files = tool(_list_files, args_schema=FileOperationInput)
+delete_file = tool(_delete_file, args_schema=DeleteFileInput)
 list_vm_cpu_usage = tool(_list_vm_cpu_usage, args_schema=VMUsageInput)
 
 
@@ -186,5 +216,7 @@ def create_aws_tools() -> list:
         list_buckets,
         create_bucket,
         upload_file_to_bucket,
+        list_files,
+        delete_file,
         list_vm_cpu_usage
     ]

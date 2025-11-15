@@ -15,16 +15,23 @@ from app.services.cloud_config_service import get_configs_dict
 # ----------------------------
 # Input Schemas for Tools
 # ----------------------------
-class UploadFileInput(BaseModel):
-    user_id: int = Field(..., description="ユーザーID")
-    file_path: str = Field(..., description="Local path to the file to upload")
+class FileOperationInput(BaseModel):
+    user_id: int = Field(..., description="User ID")
     container_name: str = Field(..., description="Target container name")
-    blob_name: Optional[str] = Field(None, description="Blob name in container, defaults to file name")
     account_name: str = Field(..., description="Azure account name")
 
 
+class UploadFileInput(FileOperationInput):
+    file_path: str = Field(..., description="Local path to the file to upload")
+    blob_name: Optional[str] = Field(None, description="Blob name in container, defaults to file name")
+
+
+class DeleteFileInput(FileOperationInput):
+    blob_name: str = Field(..., description="Blob name in container")
+
+
 class VMUsageInput(BaseModel):
-    user_id: int = Field(..., description="ユーザーID")
+    user_id: int = Field(..., description="User ID")
     vm_name: str = Field(..., description="VM instance name")
     n: int = Field(..., description="Past minutes to calculate average")
     account_name: str = Field(..., description="Azure account name")
@@ -157,6 +164,29 @@ async def _upload_file_to_bucket(user_id: int, file_path: str, container_name: s
     return f"File '{blob_name}' uploaded to container '{container_name}' in Storage Account '{account_name}'."
 
 
+async def _list_files(user_id: int, container_name: str, account_name: str) -> list[str]:
+    """
+    List all blobs in the specified container for this user.
+    指定コンテナ内のBlob一覧を返す
+    """
+    _, storage_client, _, blob_clients, _, resource_group = get_azure_clients(user_id, account_name)
+    blob_service = get_blob_service_client(storage_client, blob_clients, account_name, resource_group)
+    container_client = blob_service.get_container_client(container_name)
+    return [blob.name for blob in container_client.list_blobs()]
+
+
+async def _delete_file(user_id: int, container_name: str, blob_name: str, account_name: str) -> str:
+    """
+    Delete a blob from the specified container for this user.
+    指定コンテナからBlobを削除
+    """
+    _, storage_client, _, blob_clients, _, resource_group = get_azure_clients(user_id, account_name)
+    blob_service = get_blob_service_client(storage_client, blob_clients, account_name, resource_group)
+    container_client = blob_service.get_container_client(container_name)
+    container_client.delete_blob(blob_name)
+    return f"Blob '{blob_name}' deleted from container '{container_name}' in Storage Account '{account_name}'."
+
+
 # ----------------------------
 # Monitoring Operations
 # ----------------------------
@@ -205,6 +235,8 @@ stop_vm = tool(_stop_vm)
 create_bucket = tool(_create_bucket)
 list_buckets = tool(_list_buckets)
 upload_file_to_bucket = tool(_upload_file_to_bucket, args_schema=UploadFileInput)
+list_files = tool(_list_files, args_schema=FileOperationInput)
+delete_file = tool(_delete_file, args_schema=DeleteFileInput)
 list_vm_cpu_usage = tool(_list_vm_cpu_usage, args_schema=VMUsageInput)
 
 
@@ -220,5 +252,7 @@ def create_azure_tools() -> list:
         list_buckets,
         create_bucket,
         upload_file_to_bucket,
+        list_files,
+        delete_file,
         list_vm_cpu_usage,
     ]

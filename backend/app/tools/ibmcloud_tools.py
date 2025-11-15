@@ -13,12 +13,19 @@ from app.services.cloud_config_service import get_configs_dict
 # ----------------------------
 # Input Schemas for Tools
 # ----------------------------
-class UploadFileInput(BaseModel):
-    user_id: int = Field(..., description="ユーザーID")
-    file_path: str = Field(..., description="Local path to the file to upload")
+class FileOperationInput(BaseModel):
+    user_id: int = Field(..., description="User ID")
     bucket_name: str = Field(..., description="Target ICOS bucket name")
-    object_name: Optional[str] = Field(None, description="Object name in bucket, defaults to file name")
     account_name: str = Field(..., description="IBM Cloud account name to use")
+
+
+class UploadFileInput(FileOperationInput):
+    file_path: str = Field(..., description="Local path to the file to upload")
+    object_name: Optional[str] = Field(None, description="Object name in bucket, defaults to file name")
+
+
+class DeleteFileInput(FileOperationInput):
+    object_name: str = Field(..., description="Object name in bucket")
 
 
 # ----------------------------
@@ -177,6 +184,31 @@ async def _upload_file_to_bucket(user_id: int, file_path: str, bucket_name: str,
     return ibm_cos_operation(_upload, user_id, account_name, bucket_name, file_path, object_name)
 
 
+async def _list_files(user_id: int, account_name: str, bucket_name: str) -> list[str]:
+    """
+    List all objects in the specified IBM Cloud Object Storage bucket for this user.
+    指定バケット内のオブジェクト一覧を返す
+    """
+    def _list(cos, bucket):
+        bucket_obj = cos.Bucket(bucket)
+        return [obj.key for obj in bucket_obj.objects.all()] or []
+
+    return ibm_cos_operation(_list, user_id, account_name, bucket_name)
+
+
+async def _delete_file(user_id: int, account_name: str, bucket_name: str, object_name: str) -> str:
+    """
+    Delete an object from the specified IBM Cloud Object Storage bucket for this user.
+    指定バケットからオブジェクトを削除
+    """
+    def _delete(cos, bucket, obj_name):
+        bucket_obj = cos.Bucket(bucket)
+        bucket_obj.Object(obj_name).delete()
+        return f"Object '{obj_name}' deleted from bucket '{bucket}'."
+
+    return ibm_cos_operation(_delete, user_id, account_name, bucket_name, object_name)
+
+
 # ----------------------------
 # Tool Registration
 # ----------------------------
@@ -186,6 +218,8 @@ stop_vm = tool(_stop_vm)
 create_bucket = tool(_create_bucket)
 list_buckets = tool(_list_buckets)
 upload_file_to_bucket = tool(_upload_file_to_bucket, args_schema=UploadFileInput)
+list_files = tool(_list_files, args_schema=FileOperationInput)
+delete_file = tool(_delete_file, args_schema=DeleteFileInput)
 
 
 def create_ibmcloud_tools() -> list:
@@ -199,5 +233,7 @@ def create_ibmcloud_tools() -> list:
         stop_vm,
         list_buckets,
         create_bucket,
-        upload_file_to_bucket
+        upload_file_to_bucket,
+        list_files,
+        delete_file,
     ]
