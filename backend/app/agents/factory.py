@@ -2,8 +2,8 @@ from functools import lru_cache
 from langchain.agents import create_agent
 from langgraph.store.memory import InMemoryStore
 from app.core.config import settings
-from app.llm import get_llm  # your existing llm helper
-from app.tools import get_tools  # your existing get_tools
+from app.llm import get_llm
+from app.tools import get_tools
 import threading
 
 _user_agent_lock = threading.Lock()
