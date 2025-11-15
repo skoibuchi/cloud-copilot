@@ -236,7 +236,7 @@ create_bucket = tool(_create_bucket)
 list_buckets = tool(_list_buckets)
 upload_file_to_bucket = tool(_upload_file_to_bucket, args_schema=UploadFileInput)
 list_files = tool(_list_files, args_schema=FileOperationInput)
-delete_file = tool(_delete_file, args_schema=FileOperationInput)
+delete_file = tool(_delete_file, args_schema=DeleteFileInput)
 list_vm_cpu_usage = tool(_list_vm_cpu_usage, args_schema=VMUsageInput)
 
 
