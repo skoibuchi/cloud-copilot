@@ -3,7 +3,7 @@ from typing import Optional, Dict, Any
 from sqlalchemy.orm import Session
 from app.models.audit_log import AuditLog
 from app.database.database import SessionLocal
-from app.core.log_confing import Logger
+from app.core.log_config import Logger
 import logging
 import json
 

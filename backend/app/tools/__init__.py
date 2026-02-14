@@ -30,7 +30,7 @@ def get_tools(user: str, vectorstore_class: str):
     # vectorstore
     rag_tool_instance = None
     if vectorstore_class in supported_vectorstore_class:
-        from tools.rag_tools import create_rag_tool_instance
+        from app.tools.rag_tools import create_rag_tool_instance
         rag_tool_instance = create_rag_tool_instance(vectorstore_class=vectorstore_class, user=user)
         tools.append(rag_tool_instance.rag_tool)
 

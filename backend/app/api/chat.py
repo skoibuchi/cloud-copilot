@@ -8,7 +8,7 @@ from app.services.file_service import FileService
 from app.core.audit import AuditService
 
 router = APIRouter(prefix="/chat", tags=["chat"])
-file_sesrvice = FileService()
+file_service = FileService()
 audit_service = AuditService()
 
 
@@ -29,8 +29,8 @@ async def chat(
     # files handling: save and optionally add to vectorstore
     if files and rag_tool_instance:
         try:
-            file_paths = await file_sesrvice.save_files(files)
-            file_sesrvice.add_to_vectorstore(file_paths, rag_tool_instance)
+            file_paths = await file_service.save_files(files)
+            file_service.add_to_vectorstore(file_paths, rag_tool_instance)
             reply += "Files uploaded and added to RAG."
             audit_service.log(user_id=user_id, action="app.api.chat.upload_files", resource=str([f.filename for f in files]))
         except Exception as e:

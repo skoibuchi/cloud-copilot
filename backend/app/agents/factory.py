@@ -1,4 +1,3 @@
-from functools import lru_cache
 from langchain.agents import create_agent
 from langgraph.store.memory import InMemoryStore
 from app.core.config import settings
